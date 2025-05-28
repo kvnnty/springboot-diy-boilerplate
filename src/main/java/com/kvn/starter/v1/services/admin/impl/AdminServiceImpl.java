@@ -17,7 +17,7 @@ import com.kvn.starter.v1.exceptions.ResourceNotFoundException;
 import com.kvn.starter.v1.repositories.roles.RoleRepository;
 import com.kvn.starter.v1.repositories.users.UserRepository;
 import com.kvn.starter.v1.services.admin.AdminService;
-import com.kvn.starter.v1.utils.mappers.MapperUtil;
+import com.kvn.starter.v1.utils.mappers.ModelMapperConfig;
 
 import lombok.RequiredArgsConstructor;
 
@@ -76,7 +76,7 @@ public class AdminServiceImpl implements AdminService {
 
     List<User> admins = userRepository.findAllByRole(adminRole);
     return admins.stream()
-        .map(user -> MapperUtil.map(user, UserResponseDTO.class))
+        .map(user -> ModelMapperConfig.map(user, UserResponseDTO.class))
         .toList();
   }
 

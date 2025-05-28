@@ -3,7 +3,7 @@ package com.kvn.starter.v1.utils.mappers;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
 
-public class MapperUtil {
+public class ModelMapperConfig {
   private static final ModelMapper modelMapper = new ModelMapper();
 
   static {
