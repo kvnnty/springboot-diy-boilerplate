@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/admin")
-@Tag(name = "Admin Resource", description = "APIs for managing admin accounts and operations")
+@Tag(name = "Super Admin Resource", description = "APIs for managing admin accounts and operations")
 @RequiredArgsConstructor
 public class AdminController {
 

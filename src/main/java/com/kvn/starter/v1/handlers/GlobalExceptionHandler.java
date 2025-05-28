@@ -15,6 +15,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.kvn.starter.v1.exceptions.BadRequestException;
 import com.kvn.starter.v1.exceptions.DuplicateResourceException;
+import com.kvn.starter.v1.exceptions.FileException;
 import com.kvn.starter.v1.exceptions.ResourceNotFoundException;
 import com.kvn.starter.v1.payload.ApiError;
 import com.kvn.starter.v1.payload.ApiResponse;
@@ -104,6 +105,13 @@ public class GlobalExceptionHandler {
     log.debug("DUPLICATE_RESOURCE_EXCEPTION {}", e.getMessage());
     return buildApiError(HttpStatus.CONFLICT, e.getMessage(),
         ApiError.builder().code("DUPLICATE_RESOURCE").details(null).build());
+  }
+
+  @ExceptionHandler(FileException.class)
+  public ResponseEntity<ApiResponse<ApiError>> handleFileException(FileException e, HttpServletRequest request) {
+    log.debug("FILE_EXCEPTION {}", e.getMessage());
+    return buildApiError(HttpStatus.BAD_REQUEST, e.getMessage(),
+        ApiError.builder().code("FILE_ERROR").details(null).build());
   }
 
   @ExceptionHandler(IllegalArgumentException.class)

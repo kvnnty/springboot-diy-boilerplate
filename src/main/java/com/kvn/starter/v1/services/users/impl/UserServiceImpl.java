@@ -12,15 +12,21 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kvn.starter.v1.dtos.requests.user.ChangePasswordDTO;
 import com.kvn.starter.v1.dtos.requests.user.CreateUserDTO;
 import com.kvn.starter.v1.dtos.requests.user.UpdateUserDTO;
+import com.kvn.starter.v1.dtos.responses.users.UserResponseDTO;
+import com.kvn.starter.v1.entities.user.Otp;
 import com.kvn.starter.v1.entities.user.Role;
 import com.kvn.starter.v1.entities.user.User;
+import com.kvn.starter.v1.enums.otp.OtpPurpose;
 import com.kvn.starter.v1.enums.user.ERole;
 import com.kvn.starter.v1.exceptions.BadRequestException;
 import com.kvn.starter.v1.exceptions.DuplicateResourceException;
 import com.kvn.starter.v1.repositories.roles.RoleRepository;
 import com.kvn.starter.v1.repositories.users.UserRepository;
 import com.kvn.starter.v1.security.user.UserPrincipal;
+import com.kvn.starter.v1.services.mail.MailService;
+import com.kvn.starter.v1.services.otp.OtpService;
 import com.kvn.starter.v1.services.users.UserService;
+import com.kvn.starter.v1.utils.mappers.UserMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,9 +37,11 @@ public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
   private final RoleRepository roleRepository;
   private final PasswordEncoder passwordEncoder;
+  private final OtpService otpService;
+  private final MailService mailService;
 
   @Override
-  public void registerCustomer(CreateUserDTO requestDTO) {
+  public void registerUser(CreateUserDTO requestDTO) {
     if (userRepository.existsByEmail(requestDTO.getEmail())) {
       throw new DuplicateResourceException("Email is already in use.");
     }
@@ -53,11 +61,17 @@ public class UserServiceImpl implements UserService {
         .password(passwordEncoder.encode(requestDTO.getPassword()))
         .phoneNumber(requestDTO.getPhoneNumber())
         .nationalId(requestDTO.getNationalId())
+        .isVerified(false)
         .role(customerRole)
         .build();
 
     userRepository.save(newCustomer);
+    Otp otp = otpService.createOtp(newCustomer.getEmail(), OtpPurpose.VERIFICATION);
 
+    String message = String.format(
+        "Hello %s,\n\nUse the following code to verify your account: %s\nThis code will expire in 10 minutes.\n\nThanks,\nKevin",
+        newCustomer.getNames(), otp.getCode());
+    mailService.sendMail(newCustomer.getEmail(), "Account Verification Code", message);
   }
 
   @Override
@@ -81,16 +95,30 @@ public class UserServiceImpl implements UserService {
   public void updateUserProfile(UpdateUserDTO dto) {
     User user = getCurrentUser();
 
-    if (!dto.getPhoneNumber().equals(user.getPhoneNumber())) {
+    if (dto.getPhoneNumber().equals(user.getPhoneNumber())) {
       throw new BadRequestException("The new phone number cannot be the same as your current one.");
+    }
+    if (dto.getEmail().equals(user.getEmail())) {
+      throw new BadRequestException("The new email cannot be the same as your current one.");
+    }
+    if (dto.getNationalId().equals(user.getNationalId())) {
+      throw new BadRequestException("The new national ID cannot be the same as your current one.");
     }
 
     if (userRepository.existsByPhoneNumber(dto.getPhoneNumber())) {
       throw new DuplicateResourceException("Phone number is already in use.");
     }
+    if (userRepository.existsByEmail(dto.getEmail())) {
+      throw new DuplicateResourceException("Email is already in use.");
+    }
+    if (userRepository.existsByNationalId(dto.getNationalId())) {
+      throw new DuplicateResourceException("National ID is already in use.");
+    }
 
-    user.setNames(dto.getNames() != null ? dto.getNames() : user.getNames());
-    user.setPhoneNumber(dto.getPhoneNumber() != null ? dto.getPhoneNumber() : user.getPhoneNumber());
+    user.setNames(dto.getNames());
+    user.setPhoneNumber(dto.getPhoneNumber());
+    user.setEmail(dto.getEmail());
+    user.setNationalId(dto.getNationalId());
 
     userRepository.save(user);
   }
@@ -112,6 +140,12 @@ public class UserServiceImpl implements UserService {
   public void deleteCurrentUser() {
     User user = getCurrentUser();
     userRepository.delete(user);
+  }
+
+  @Override
+  public UserResponseDTO getMyprofile() {
+    User user = this.getCurrentUser();
+    return UserMapper.toDto(user);
   }
 
 }

@@ -2,13 +2,20 @@ package com.kvn.starter.v1.controllers.users;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.kvn.starter.v1.dtos.requests.user.*;
-import com.kvn.starter.v1.entities.user.User;
+import com.kvn.starter.v1.dtos.requests.user.ChangePasswordDTO;
+import com.kvn.starter.v1.dtos.requests.user.CreateUserDTO;
+import com.kvn.starter.v1.dtos.requests.user.UpdateUserDTO;
+import com.kvn.starter.v1.dtos.responses.users.UserResponseDTO;
 import com.kvn.starter.v1.payload.ApiResponse;
 import com.kvn.starter.v1.services.users.UserService;
-import com.kvn.starter.v1.dtos.requests.user.UpdateUserDTO;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -24,15 +31,14 @@ public class UserController {
 
   @PostMapping("/register")
   public ResponseEntity<ApiResponse<Object>> registerCustomer(@Valid @RequestBody CreateUserDTO requestDTO) {
-    userService.registerCustomer(requestDTO);
+    userService.registerUser(requestDTO);
     return ApiResponse.success("Account created successfully, please check your email to verify your account",
         HttpStatus.CREATED, null);
   }
 
   @GetMapping("/me")
-  public ResponseEntity<ApiResponse<User>> getCurrentUser() {
-    User user = userService.getCurrentUser();
-    return ApiResponse.success("User profile retrieved", HttpStatus.OK, user);
+  public ResponseEntity<ApiResponse<UserResponseDTO>> getMyProfile() {
+    return ApiResponse.success("User profile retrieved", HttpStatus.OK, userService.getMyprofile());
   }
 
   @PutMapping("/update-profile")
